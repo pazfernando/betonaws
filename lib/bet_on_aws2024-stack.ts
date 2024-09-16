@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as fs from 'fs'
+import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class BetOnAws2024Stack extends cdk.Stack {
@@ -131,6 +132,10 @@ export class BetOnAws2024Stack extends cdk.Stack {
       isDefault: true
     });
 
+    const asset = new s3assets.Asset(this, 'LambdaConcurrencyLimits', {
+      path: './lib/LambdaConcurrencyLimits.jmx', // Path to your local file
+    });
+
     const script = fs.readFileSync('./lib/setup.sh', 'utf8');
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
@@ -141,6 +146,9 @@ export class BetOnAws2024Stack extends cdk.Stack {
       }),
       userData: cdk.aws_ec2.UserData.custom(script) // Usa el script leído
     });
+
+    asset.grantRead(instance.role);
+    instance.node.addDependency(asset);
 
     // Abrir el puerto 80
     instance.connections.allowFromAnyIpv4(cdk.aws_ec2.Port.tcp(80));
