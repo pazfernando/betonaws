@@ -5,7 +5,13 @@ execution:
 
 scenarios:
   with_script:
-    script: /tmp/LambdaConcurrencyLimits.jmx
+    script: ./LambdaConcurrencyLimits.jmx
+
+modules:
+  jmeter:
+    path: /home/ec2-user/apache-jmeter-5.6.3/bin/jmeter
+    properties:
+      APIURL: %APIURL%
     
 reporting:
 - module: passfail

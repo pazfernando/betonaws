@@ -127,26 +127,26 @@ export class BetOnAws2024Stack extends cdk.Stack {
       isDefault: true
     });
 
-    const assetPath1 = './lib/LambdaConcurrencyLimits.jmx';
-    const asset1 = new s3assets.Asset(this, 'LambdaConcurrencyLimits', {
-      path: assetPath1, // Path to your local file
+    const assetPathJMeter = './lib/LambdaConcurrencyLimits.jmx';
+    const assetJMeter = new s3assets.Asset(this, 'LambdaConcurrencyLimits', {
+      path: assetPathJMeter, // Path to your local file
     });
-    const s3UriAsset1 = `s3://${asset1.s3BucketName}/${asset1.s3ObjectKey}`;
-    const originalFileName1 = path.basename(assetPath1);
+    const s3UriAssetJMeter = `s3://${assetJMeter.s3BucketName}/${assetJMeter.s3ObjectKey}`;
+    const originalFileJMeter = path.basename(assetPathJMeter);
 
-    const assetPath2 = './lib/existing_jmeter_script.yml';
-    const asset2 = new s3assets.Asset(this, 'ExistingJmeterScript', {
-      path: assetPath2, // Path to your local file
+    const assetPathTaurus = './lib/existing_jmeter_script.yml';
+    const assetTaurus = new s3assets.Asset(this, 'ExistingJmeterScript', {
+      path: assetPathTaurus, // Path to your local file
     });
-    const s3UriAsset2 = `s3://${asset2.s3BucketName}/${asset2.s3ObjectKey}`;
-    const originalFileName2 = path.basename(assetPath2);
+    const s3UriAssetTaurus = `s3://${assetTaurus.s3BucketName}/${assetTaurus.s3ObjectKey}`;
+    const originalFileTaurus = path.basename(assetPathTaurus);
 
     let script = fs.readFileSync('./lib/setup.sh', 'utf8');
-    script = script.replace('${s3UriAsset1}', s3UriAsset1);
-    script = script.replace('${originalFileName1}', originalFileName1);
-    script = script.replace('${s3UriAsset2}', s3UriAsset2);
-    script = script.replace('${originalFileName2}', originalFileName2);
-    script = script.replace('${apiEndpoint}', apiEndpoint);
+    script = script.replace(/\$\{s3UriAssetJMeter\}/g, s3UriAssetJMeter);
+    script = script.replace(/\$\{originalFileJMeter\}/g, originalFileJMeter);
+    script = script.replace(/\$\{s3UriAssetTaurus\}/g, s3UriAssetTaurus);
+    script = script.replace(/\$\{originalFileTaurus\}/g, originalFileTaurus);
+    script = script.replace(/\$\{apiEndpoint\}/g, apiEndpoint);
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
       instanceType: new cdk.aws_ec2.InstanceType('t4g.small'),
@@ -157,10 +157,10 @@ export class BetOnAws2024Stack extends cdk.Stack {
       userData: cdk.aws_ec2.UserData.custom(script) // Usa el script leído
     });
 
-    asset1.grantRead(instance.role);
-    instance.node.addDependency(asset1);
-    asset2.grantRead(instance.role);
-    instance.node.addDependency(asset2);
+    assetJMeter.grantRead(instance.role);
+    instance.node.addDependency(assetJMeter);
+    assetTaurus.grantRead(instance.role);
+    instance.node.addDependency(assetTaurus);
 
     // Abrir el puerto 80
     instance.connections.allowFromAnyIpv4(cdk.aws_ec2.Port.tcp(80));
