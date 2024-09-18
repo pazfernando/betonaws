@@ -26,11 +26,11 @@ Based on best practices for AWS SAM + AWS CLI [https://docs.aws.amazon.com/serve
 # Build lambdas
 - ``sam build -t ./cdk.out/BetOnAws2024Stack.template.json``
 # Deploy resources
-- ``cdk deploy --profile <<your-profile>>``
+- ``cdk deploy --profile <<your-profile>> --require-approval never``
 # Test API
 - ``sam local start-api -t ./cdk.out/BetOnAws2024Stack.template.json --profile <<your-profile>>``
 - ``curl -X POST http://localhost:3000/   -H "Content-Type: application/json"   -d '{"winner": "ballenita", "mount": 111'``
 - ``curl -X GET http://localhost:3000/stats?winner=barcelona``
 # Destroy resources __[IMPORTANT]__
-- ``cdk destroy --all --profile <<your-profile>>``
+- ``cdk destroy --all --profile <<your-profile>> --force``
 

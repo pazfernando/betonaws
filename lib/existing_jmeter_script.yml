@@ -5,7 +5,7 @@ execution:
 
 scenarios:
   with_script:
-    script: LambdaConcurrencyLimits.jmx
+    script: /tmp/LambdaConcurrencyLimits.jmx
     
 reporting:
 - module: passfail

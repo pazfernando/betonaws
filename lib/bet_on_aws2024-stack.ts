@@ -3,6 +3,7 @@ import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as fs from 'fs'
 import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
+import * as path from 'path';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class BetOnAws2024Stack extends cdk.Stack {
@@ -33,14 +34,6 @@ export class BetOnAws2024Stack extends cdk.Stack {
       retention: RetentionDays.ONE_DAY
     });
 
-    /*const role = new cdk.aws_iam.Role(this, 'ApiGatewayCloudWatchRole', {
-      roleName: 'AmazonAPIGatewayPushToCloudWatchLogsRole',
-      assumedBy: new cdk.aws_iam.ServicePrincipal('apigateway.amazonaws.com'),
-      managedPolicies: [
-        cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs')
-      ],
-    });*/
-    
     const lambdaFunction_PB = new cdk.aws_lambda.Function(this, 'BetOnAWSPushBet', {
       runtime: cdk.aws_lambda.Runtime.NODEJS_20_X,
       code: cdk.aws_lambda.Code.fromAsset('./lib/pushbet'),
@@ -58,6 +51,8 @@ export class BetOnAws2024Stack extends cdk.Stack {
       },
       cloudWatchRole: true
     });
+
+    const apiEndpoint = api.url;
 
     const mockIntegrations_CORS = new cdk.aws_apigateway.MockIntegration({
       integrationResponses: [{
@@ -132,11 +127,26 @@ export class BetOnAws2024Stack extends cdk.Stack {
       isDefault: true
     });
 
-    const asset = new s3assets.Asset(this, 'LambdaConcurrencyLimits', {
-      path: './lib/LambdaConcurrencyLimits.jmx', // Path to your local file
+    const assetPath1 = './lib/LambdaConcurrencyLimits.jmx';
+    const asset1 = new s3assets.Asset(this, 'LambdaConcurrencyLimits', {
+      path: assetPath1, // Path to your local file
     });
+    const s3UriAsset1 = `s3://${asset1.s3BucketName}/${asset1.s3ObjectKey}`;
+    const originalFileName1 = path.basename(assetPath1);
 
-    const script = fs.readFileSync('./lib/setup.sh', 'utf8');
+    const assetPath2 = './lib/existing_jmeter_script.yml';
+    const asset2 = new s3assets.Asset(this, 'ExistingJmeterScript', {
+      path: assetPath2, // Path to your local file
+    });
+    const s3UriAsset2 = `s3://${asset2.s3BucketName}/${asset2.s3ObjectKey}`;
+    const originalFileName2 = path.basename(assetPath2);
+
+    let script = fs.readFileSync('./lib/setup.sh', 'utf8');
+    script = script.replace('${s3UriAsset1}', s3UriAsset1);
+    script = script.replace('${originalFileName1}', originalFileName1);
+    script = script.replace('${s3UriAsset2}', s3UriAsset2);
+    script = script.replace('${originalFileName2}', originalFileName2);
+    script = script.replace('${apiEndpoint}', apiEndpoint);
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
       instanceType: new cdk.aws_ec2.InstanceType('t4g.small'),
@@ -147,8 +157,10 @@ export class BetOnAws2024Stack extends cdk.Stack {
       userData: cdk.aws_ec2.UserData.custom(script) // Usa el script leído
     });
 
-    asset.grantRead(instance.role);
-    instance.node.addDependency(asset);
+    asset1.grantRead(instance.role);
+    instance.node.addDependency(asset1);
+    asset2.grantRead(instance.role);
+    instance.node.addDependency(asset2);
 
     // Abrir el puerto 80
     instance.connections.allowFromAnyIpv4(cdk.aws_ec2.Port.tcp(80));
