@@ -10,6 +10,14 @@ export class BetOnAws2024Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Create the DynamoDB table
+    const table = new cdk.aws_dynamodb.Table(this, 'BetOnAWSTable', {
+      tableName: 'betonaws',
+      partitionKey: { name: 'winner', type: cdk.aws_dynamodb.AttributeType.STRING },
+      sortKey: { name: 'identifier', type: cdk.aws_dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Crea el rol para la función Lambda
     const lambdaRole = new cdk.aws_iam.Role(this, 'BetOnAWSLambdaRole', {
       assumedBy: new cdk.aws_iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -21,16 +29,20 @@ export class BetOnAws2024Stack extends cdk.Stack {
       actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents']
     }));
 
+    lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
+      actions: ['dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:PutItem'],
+      resources: [table.tableArn],
+    }));
+
     // Define la función Lambda
     const lambdaFunction_RS = new cdk.aws_lambda.Function(this, 'BetOnAWSReadStats', {
       runtime: cdk.aws_lambda.Runtime.NODEJS_20_X,
       code: cdk.aws_lambda.Code.fromAsset('./lib/readstats'),
       handler: 'index.handler',
-      role: lambdaRole,
-      timeout: cdk.Duration.minutes(1)
+      role: lambdaRole
     });
 
-    const logGroup = new cdk.aws_logs.LogGroup(this, 'BetOnAWSApiGatewayLogGroup', {
+    const logGroupLambda = new cdk.aws_logs.LogGroup(this, 'BetOnAWSLambdaLogGroup', {
       retention: RetentionDays.ONE_DAY
     });
 
@@ -39,7 +51,11 @@ export class BetOnAws2024Stack extends cdk.Stack {
       code: cdk.aws_lambda.Code.fromAsset('./lib/pushbet'),
       handler: 'index.handler',
       role: lambdaRole,
-      timeout: cdk.Duration.minutes(1)
+      logGroup: logGroupLambda
+    });
+
+    const logGroupApiGateway = new cdk.aws_logs.LogGroup(this, 'BetOnAWSApiGatewayLogGroup', {
+      retention: RetentionDays.ONE_DAY
     });
 
     const api = new cdk.aws_apigateway.RestApi(this, 'BetOnAWSRestfulApi', {
@@ -47,7 +63,7 @@ export class BetOnAws2024Stack extends cdk.Stack {
       deployOptions: {
         accessLogFormat: cdk.aws_apigateway.AccessLogFormat.jsonWithStandardFields(),
         loggingLevel: cdk.aws_apigateway.MethodLoggingLevel.INFO,
-        accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(logGroup)
+        accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(logGroupApiGateway)
       },
       cloudWatchRole: true
     });
@@ -90,7 +106,8 @@ export class BetOnAws2024Stack extends cdk.Stack {
         responseModels: {
           'application/json': cdk.aws_apigateway.Model.EMPTY_MODEL
         }
-      }]
+      }],
+      requestParameters: {  'method.request.querystring.period': true,}
     });
 
     // Método OPTIONS para CORS
@@ -113,14 +130,6 @@ export class BetOnAws2024Stack extends cdk.Stack {
           'application/json': cdk.aws_apigateway.Model.EMPTY_MODEL
         }
       }]
-    });
-
-    // Create the DynamoDB table
-    const table = new cdk.aws_dynamodb.Table(this, 'BetOnAWSTable', {
-      tableName: 'betonaws',
-      partitionKey: { name: 'winner', type: cdk.aws_dynamodb.AttributeType.STRING },
-      sortKey: { name: 'identifier', type: cdk.aws_dynamodb.AttributeType.STRING },
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // USE WITH CAUTION: This will delete the table when the stack is destroyed
     });
 
     const vpc = cdk.aws_ec2.Vpc.fromLookup(this, 'DefaultVpc', {
@@ -149,7 +158,7 @@ export class BetOnAws2024Stack extends cdk.Stack {
     script = script.replace(/\$\{apiEndpoint\}/g, apiEndpoint);
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
-      instanceType: new cdk.aws_ec2.InstanceType('t4g.small'),
+      instanceType: new cdk.aws_ec2.InstanceType('t4g.xlarge'),
       machineImage: new cdk.aws_ec2.AmazonLinuxImage({
         generation: cdk.aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
         cpuType: cdk.aws_ec2.AmazonLinuxCpuType.ARM_64

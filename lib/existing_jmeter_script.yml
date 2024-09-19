@@ -1,9 +1,16 @@
 execution:
-- iterations: 50
-  concurrency: 10
+- iterations: 3
+  #concurrency: 1
+  #concurrency: 10
+  #concurrency: 100
+  concurrency: 1000
+  #concurrency: 10000
+  #concurrency: 100000
+  ramp-up: 20s
   scenario: with_script
 
 scenarios:
+  loop: 3
   with_script:
     script: ./LambdaConcurrencyLimits.jmx
 
@@ -14,7 +21,8 @@ modules:
       APIURL: %APIURL%
     
 reporting:
+- module: final-stats
+  failed-labels: true
 - module: passfail
   criteria:
-  - "avg-rt>150ms for 10s, continue as failed"
-  - "fail>50% for 10s, stop as failed"
+  - "failures>90% for 5s, stop as failed"
