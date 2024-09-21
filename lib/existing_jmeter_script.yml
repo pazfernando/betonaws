@@ -1,12 +1,5 @@
 execution:
 - scenario: with_script
-  #concurrency: 1
-  #concurrency: 10
-  #concurrency: 100
-  concurrency: 1000
-  #concurrency: 10000
-  #concurrency: 100000
-  #ramp-up: 20s
 
 scenarios:
   with_script:
@@ -17,6 +10,9 @@ scenarios:
       disable:
       - ThreadGroup100
       - ThreadGroup1K
+      - ThreadGroup10K
+      - ThreadGroup10K-RampUp
+      - ThreadGroup100K-RampUp
 
 modules:
   jmeter:
