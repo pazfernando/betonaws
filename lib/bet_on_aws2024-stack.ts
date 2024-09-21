@@ -11,8 +11,8 @@ export class BetOnAws2024Stack extends cdk.Stack {
     super(scope, id, props);
 
     // Create the DynamoDB table
-    const table = new cdk.aws_dynamodb.Table(this, 'BetOnAWSTable', {
-      tableName: 'betonaws',
+    const table = new cdk.aws_dynamodb.Table(this, 'BetOnAWSTable2024', {
+      tableName: 'betonaws2024',
       partitionKey: { name: 'winner', type: cdk.aws_dynamodb.AttributeType.STRING },
       sortKey: { name: 'identifier', type: cdk.aws_dynamodb.AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,

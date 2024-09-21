@@ -1,18 +1,22 @@
 execution:
-- iterations: 3
+- scenario: with_script
   #concurrency: 1
   #concurrency: 10
   #concurrency: 100
   concurrency: 1000
   #concurrency: 10000
   #concurrency: 100000
-  ramp-up: 20s
-  scenario: with_script
+  #ramp-up: 20s
 
 scenarios:
-  loop: 3
   with_script:
     script: ./LambdaConcurrencyLimits.jmx
+    modifications:
+      enable:
+      - ThreadGroup10
+      disable:
+      - ThreadGroup100
+      - ThreadGroup1K
 
 modules:
   jmeter:
@@ -20,9 +24,3 @@ modules:
     properties:
       APIURL: %APIURL%
     
-reporting:
-- module: final-stats
-  failed-labels: true
-- module: passfail
-  criteria:
-  - "failures>90% for 5s, stop as failed"
