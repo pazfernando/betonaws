@@ -39,7 +39,8 @@ export class BetOnAws2024Stack extends cdk.Stack {
       runtime: cdk.aws_lambda.Runtime.NODEJS_20_X,
       code: cdk.aws_lambda.Code.fromAsset('./lib/readstats'),
       handler: 'index.handler',
-      role: lambdaRole
+      role: lambdaRole,
+      timeout: cdk.Duration.seconds(5) // 50K o más
     });
 
     const logGroupLambda = new cdk.aws_logs.LogGroup(this, 'BetOnAWSLambdaLogGroup', {
@@ -158,7 +159,8 @@ export class BetOnAws2024Stack extends cdk.Stack {
     script = script.replace(/\$\{apiEndpoint\}/g, apiEndpoint);
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
-      instanceType: new cdk.aws_ec2.InstanceType('t4g.xlarge'),
+      // instanceType: new cdk.aws_ec2.InstanceType('t4g.xlarge'),
+      instanceType: new cdk.aws_ec2.InstanceType('t4g.2xlarge'), //100K conexiones
       machineImage: new cdk.aws_ec2.AmazonLinuxImage({
         generation: cdk.aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
         cpuType: cdk.aws_ec2.AmazonLinuxCpuType.ARM_64

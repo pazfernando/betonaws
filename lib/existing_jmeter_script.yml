@@ -6,12 +6,13 @@ scenarios:
     script: ./LambdaConcurrencyLimits.jmx
     modifications:
       enable:
-      - ThreadGroup10
-      disable:
       - ThreadGroup100
+      disable:
+      - ThreadGroup10
       - ThreadGroup1K
       - ThreadGroup10K
       - ThreadGroup10K-RampUp
+      - ThreadGroup50K-RampUp
       - ThreadGroup100K-RampUp
 
 modules:
