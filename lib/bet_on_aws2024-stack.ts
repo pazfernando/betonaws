@@ -4,15 +4,24 @@ import { Construct } from 'constructs';
 import * as fs from 'fs'
 import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
 import * as path from 'path';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
+function generarStringAleatorio(): string {
+  const prefijo = 'betonaws2024';
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const sufijo = Array.from({ length: 6 }, () => caracteres.charAt(Math.floor(Math.random() * caracteres.length))).join('');
+  return prefijo + sufijo;
+}
 export class BetOnAws2024Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const _tableName = generarStringAleatorio();
+
     // Create the DynamoDB table
     const table = new cdk.aws_dynamodb.Table(this, 'BetOnAWSTable2024', {
-      tableName: 'betonaws2024',
+      tableName: _tableName,
+      readCapacity: 5,
+      writeCapacity: 5,
       partitionKey: { name: 'winner', type: cdk.aws_dynamodb.AttributeType.STRING },
       sortKey: { name: 'identifier', type: cdk.aws_dynamodb.AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -40,6 +49,9 @@ export class BetOnAws2024Stack extends cdk.Stack {
       code: cdk.aws_lambda.Code.fromAsset('./lib/readstats'),
       handler: 'index.handler',
       role: lambdaRole,
+      environment: {
+        TABLENAME: _tableName
+      },
       timeout: cdk.Duration.seconds(5) // 50K o más
     });
 
@@ -160,10 +172,11 @@ export class BetOnAws2024Stack extends cdk.Stack {
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
       // instanceType: new cdk.aws_ec2.InstanceType('t4g.xlarge'),
-      instanceType: new cdk.aws_ec2.InstanceType('t4g.2xlarge'), //100K conexiones
+      instanceType: new cdk.aws_ec2.InstanceType('m5n.xlarge'), // 50K o mas
       machineImage: new cdk.aws_ec2.AmazonLinuxImage({
         generation: cdk.aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
-        cpuType: cdk.aws_ec2.AmazonLinuxCpuType.ARM_64
+        // cpuType: cdk.aws_ec2.AmazonLinuxCpuType.ARM_64
+        cpuType: cdk.aws_ec2.AmazonLinuxCpuType.X86_64 // 50K o mas
       }),
       userData: cdk.aws_ec2.UserData.custom(script) // Usa el script leído
     });
