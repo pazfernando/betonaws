@@ -1,24 +1,31 @@
 execution:
 - scenario: with_script
 
+services:
+- module: shellexec
+  prepare:
+  - rm -rf /var/www/html/stats/* ./results.jtl
+
 scenarios:
   with_script:
     script: ./LambdaConcurrencyLimits.jmx
     modifications:
       enable:
-      - ThreadGroup100
-      disable:
       - ThreadGroup10
+      disable:
+      - ThreadGroup100
       - ThreadGroup1K
       - ThreadGroup10K
       - ThreadGroup10K-RampUp
       - ThreadGroup50K-RampUp
       - ThreadGroup100K-RampUp
-      - ThreadGroup100K-RampUp-TM100ms
+      - ThreadGroup100K-RampUp-100KUsuarios
 
 modules:
   jmeter:
     path: /home/ec2-user/apache-jmeter-5.6.3/bin/jmeter
     properties:
       APIURL: %APIURL%
-    
+    jmeter-properties:
+      jmeter.save.saveservice.output_format: xml
+    cmdline: -e -l ./results.jtl -o /var/www/html/stats
