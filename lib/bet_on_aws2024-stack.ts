@@ -64,6 +64,9 @@ export class BetOnAws2024Stack extends cdk.Stack {
       code: cdk.aws_lambda.Code.fromAsset('./lib/pushbet'),
       handler: 'index.handler',
       role: lambdaRole,
+      environment: {
+        TABLENAME: _tableName
+      },
       logGroup: logGroupLambda
     });
 
