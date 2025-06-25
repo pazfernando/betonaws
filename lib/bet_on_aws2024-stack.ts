@@ -175,7 +175,7 @@ export class BetOnAws2024Stack extends cdk.Stack {
     const instance = new cdk.aws_ec2.Instance(this, 'JMeterInstance', {
       vpc,
       // instanceType: new cdk.aws_ec2.InstanceType('t4g.xlarge'),
-      instanceType: new cdk.aws_ec2.InstanceType('m5n.2xlarge'), // 50K o mas
+      instanceType: new cdk.aws_ec2.InstanceType('m5n.xlarge'), // 50K o mas
       machineImage: new cdk.aws_ec2.AmazonLinuxImage({
         generation: cdk.aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
         // cpuType: cdk.aws_ec2.AmazonLinuxCpuType.ARM_64
